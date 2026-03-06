@@ -17,6 +17,7 @@ def require_env(name):
 
 DB_PATH = os.getenv('DATABASE', 'ecorp.db')
 FLAG_KEY = require_env('FLAG_KEY')
+DECRYPT_KEY = require_env('DECRYPT_KEY')
 DECOY_FLAG = os.getenv('DECOY_FLAG', 'XPL8{fake_flag_i_require_something}')
 IDENTITY_FLAGS = {
     'elliot': require_env('FLAG_1'),
@@ -28,17 +29,6 @@ IDENTITY_FLAGS = {
 
 app = Flask(__name__)
 app.secret_key = require_env('SECRET_KEY')
-
-def get_workflow():
-    workflow = session.setdefault('workflow', {})
-    workflow.setdefault('stage1_sqli', False)
-    workflow.setdefault('stage2_2fa', False)
-    workflow.setdefault('stage3_artifact', False)
-    workflow.setdefault('stage4_root', False)
-    workflow.setdefault('bootstrap', False)
-    workflow.setdefault('nonce', '')
-    workflow.setdefault('artifact_hash', '')
-    return workflow
 
 def keystream(secret, length):
     output = b''
@@ -118,7 +108,6 @@ def login():
     session['username'] = user['username']
     session['clearance_level'] = user['clearance_level']
     session['is_root'] = user['is_root']
-    get_workflow()
     
     session_token = secrets.token_hex(32)
     conn.execute('UPDATE employees SET session_token = ? WHERE id = ?', (session_token, user['id']))
@@ -163,9 +152,6 @@ def verify_2fa():
             session['username'] = user['username']
             session['clearance_level'] = user['clearance_level']
             session['is_root'] = user['is_root']
-            workflow = get_workflow()
-            workflow['stage2_2fa'] = True
-            session['workflow'] = workflow
             
             session_token = secrets.token_hex(32)
             conn.execute('UPDATE employees SET session_token = ? WHERE id = ?', (session_token, user['id']))
@@ -206,12 +192,6 @@ def search_employees():
     sql = f"SELECT employee_id, username, email, department, clearance_level FROM employees WHERE username LIKE '%{query}%' OR department LIKE '%{query}%'"
     
     try:
-        lowered = query.lower()
-        if 'union' in lowered and 'select' in lowered and 'employees' in lowered:
-            workflow = get_workflow()
-            workflow['stage1_sqli'] = True
-            session['workflow'] = workflow
-
         results = conn.execute(sql).fetchall()
         conn.close()
         
@@ -229,25 +209,6 @@ def search_employees():
     except Exception as e:
         conn.close()
         return jsonify({'error': 'Search failed'}), 500
-
-@app.route('/api/challenge/bootstrap', methods=['GET'])
-@login_required
-def challenge_bootstrap():
-    workflow = get_workflow()
-    if not workflow.get('stage2_2fa'):
-        return jsonify({'error': '2FA stage required before bootstrap'}), 403
-
-    if not workflow.get('nonce'):
-        workflow['nonce'] = secrets.token_hex(12)
-    workflow['bootstrap'] = True
-    session['workflow'] = workflow
-
-    return jsonify({
-        'bootstrap': True,
-        'nonce': workflow['nonce'],
-        'proof_formula': 'sha256(nonce:data:identity:employee_id)',
-        'required_header': 'X-Chain-Proof'
-    })
 
 @app.route('/api/documents', methods=['GET'])
 @login_required
@@ -304,17 +265,8 @@ def download_file():
 
     conn.close()
     filepath = os.path.join('uploads', 'public', filename.replace('../', '', 1))
-    target_private = os.path.abspath(os.path.join('uploads', 'private', 'flag.enc'))
-    resolved = os.path.abspath(filepath)
 
     try:
-        if resolved == target_private:
-            with open(resolved, 'r') as flag_file:
-                content = flag_file.read().strip()
-            workflow = get_workflow()
-            workflow['stage3_artifact'] = True
-            workflow['artifact_hash'] = hashlib.sha256(content.encode()).hexdigest()
-            session['workflow'] = workflow
         return send_file(filepath, as_attachment=True, download_name=os.path.basename(filename))
     except Exception:
         return jsonify({'error': 'File not found'}), 404
@@ -380,10 +332,6 @@ def elevate_privileges():
         new_is_root = 1 if target_level == 5 else session.get('is_root', 0)
         session['clearance_level'] = target_level
         session['is_root'] = new_is_root
-        if target_level == 5:
-            workflow = get_workflow()
-            workflow['stage4_root'] = True
-            session['workflow'] = workflow
         
         conn.execute(
             'INSERT INTO access_logs (employee_id, action, ip_address) VALUES (?, ?, ?)',
@@ -405,41 +353,24 @@ def elevate_privileges():
 def decrypt_flag():
     data = request.get_json()
     encrypted = data.get('data', '')
+    provided_key = data.get('key', '')
     
     if not encrypted:
         return jsonify({'error': 'No data provided'}), 400
+    if not provided_key:
+        return jsonify({'error': 'Decryption key required'}), 400
     
     try:
-        workflow = get_workflow()
-        if not all([
-            workflow.get('stage1_sqli'),
-            workflow.get('stage2_2fa'),
-            workflow.get('bootstrap'),
-            workflow.get('stage3_artifact'),
-            workflow.get('stage4_root')
-        ]):
-            return jsonify({'error': 'Workflow incomplete'}), 403
-
         with open(os.path.join('uploads', 'private', 'flag.enc'), 'r') as flag_file:
             expected = flag_file.read().strip()
 
         # Require exact ciphertext captured from Stage 3.
-        candidate = encrypted.strip()
-        if not hmac.compare_digest(candidate, expected):
+        if not hmac.compare_digest(encrypted.strip(), expected):
             return jsonify({'error': 'Decryption failed'}), 400
-        if not hmac.compare_digest(
-            hashlib.sha256(candidate.encode()).hexdigest(),
-            workflow.get('artifact_hash', '')
-        ):
+        if not hmac.compare_digest(provided_key.strip(), DECRYPT_KEY):
             return jsonify({'error': 'Decryption failed'}), 400
 
         identity = request.headers.get('X-CTF-Identity', '').strip().lower()
-        proof = request.headers.get('X-Chain-Proof', '').strip().lower()
-        material = f"{workflow.get('nonce', '')}:{candidate}:{identity}:{session.get('employee_id', '')}"
-        expected_proof = hashlib.sha256(material.encode()).hexdigest()
-        if not proof or not hmac.compare_digest(proof, expected_proof):
-            return jsonify({'error': 'Invalid chain proof'}), 403
-
         mapped_flag = IDENTITY_FLAGS.get(identity, DECOY_FLAG)
         return jsonify({'decrypted': mapped_flag})
     except:
