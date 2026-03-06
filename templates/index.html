@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E Corp - Employee Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .terminal {
+            background: #000;
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            max-width: 800px;
+            width: 90%;
+            padding: 30px;
+            border-radius: 5px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        
+        .section {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            background: #0a0a0a;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 5px #00ff00;
+        }
+        
+        button {
+            padding: 12px 30px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: #00cc00;
+        }
+        
+        button.secondary {
+            background: transparent;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+        }
+        
+        button.secondary:hover {
+            background: #00ff00;
+            color: #000;
+        }
+        
+        .message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-left: 3px solid #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .error {
+            border-left-color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff0000;
+        }
+        
+        .info-box {
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 13px;
+        }
+        
+        .employee-card {
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .employee-card p {
+            margin: 5px 0;
+            font-size: 13px;
+        }
+        
+        .doc-item {
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid #00ff00;
+            padding: 12px;
+            margin: 8px 0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .doc-item:hover {
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .badge {
+            background: #00ff00;
+            color: #000;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .nav {
+            margin: 20px 0;
+            border-top: 1px solid #00ff00;
+            border-bottom: 1px solid #00ff00;
+            padding: 15px 0;
+        }
+        
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .ascii-art {
+            font-size: 10px;
+            line-height: 10px;
+            opacity: 0.3;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal">
+        <div class="header">
+            <h1>E CORP</h1>
+            <p>Employee Portal v2.1.5 | Authorized Personnel Only</p>
+        </div>
+        
+        <div id="loginSection" class="section active">
+            <div class="ascii-art">
+  _____ 
+ | ____|
+ |  _|  
+ | |___ 
+ |_____|
+            </div>
+            <h2>&gt; AUTHENTICATION REQUIRED</h2>
+            <div id="loginMessage"></div>
+            <div class="form-group">
+                <label>&gt; Username:</label>
+                <input type="text" id="username" placeholder="Enter employee username">
+            </div>
+            <div class="form-group">
+                <label>&gt; Password:</label>
+                <input type="password" id="password" placeholder="Enter password">
+            </div>
+            <button onclick="login()">LOGIN</button>
+            <div class="info-box" style="margin-top: 20px;">
+                <p><strong>NOTICE:</strong> This system is for authorized E Corp employees only.</p>
+                <p>All activities are monitored and logged.</p>
+                <p style="margin-top: 10px; opacity: 0.5;">Guest credentials: guest / guest123</p>
+            </div>
+        </div>
+        
+        <div id="twoFactorSection" class="section">
+            <h2>&gt; TWO-FACTOR AUTHENTICATION</h2>
+            <div id="twoFactorMessage"></div>
+            <div class="form-group">
+                <label>&gt; Enter 6-digit code:</label>
+                <input type="text" id="twoFactorCode" placeholder="000000">
+            </div>
+            <button onclick="verify2FA()">VERIFY</button>
+            <button class="secondary" onclick="cancelLogin()">CANCEL</button>
+        </div>
+        
+        <div id="dashboardSection" class="section">
+            <h2>&gt; WELCOME, <span id="displayUsername"></span></h2>
+            <div class="info-box">
+                <p><strong>Employee ID:</strong> <span id="displayEmployeeId"></span></p>
+                <p><strong>Clearance Level:</strong> <span id="displayClearance"></span></p>
+                <p><strong>Department:</strong> <span id="displayDepartment"></span></p>
+                <p><strong>Root Access:</strong> <span id="displayRoot"></span></p>
+            </div>
+            
+            <div class="nav">
+                <button onclick="showSearch()">EMPLOYEE SEARCH</button>
+                <button onclick="showDocuments()">DOCUMENTS</button>
+                <button onclick="showElevate()">REQUEST ELEVATION</button>
+                <button class="secondary" onclick="logout()">LOGOUT</button>
+            </div>
+            
+            <div id="dashboardContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        let currentUser = null;
+        
+        function showMessage(elementId, message, isError = false) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<div class="message ${isError ? 'error' : ''}">${message}</div>`;
+        }
+        
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+        }
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showMessage('loginMessage', 'Username and password required', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+                
+                const data = await response.json();
+                
+                if (data.requires_2fa) {
+                    showMessage('twoFactorMessage', 'Two-factor authentication enabled for this account');
+                    showSection('twoFactorSection');
+                } else if (data.success) {
+                    currentUser = data;
+                    loadDashboard();
+                } else {
+                    showMessage('loginMessage', data.error || 'Login failed', true);
+                }
+            } catch (error) {
+                showMessage('loginMessage', 'Connection error', true);
+            }
+        }
+        
+        async function verify2FA() {
+            const code = document.getElementById('twoFactorCode').value;
+            
+            try {
+                const response = await fetch('/api/verify-2fa', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({code})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data;
+                    loadDashboard();
+                } else {
+                    showMessage('twoFactorMessage', data.error || 'Invalid code', true);
+                }
+            } catch (error) {
+                showMessage('twoFactorMessage', 'Verification failed', true);
+            }
+        }
+        
+        function cancelLogin() {
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            showSection('loginSection');
+        }
+        
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/profile');
+                const profile = await response.json();
+                
+                document.getElementById('displayUsername').textContent = profile.username.toUpperCase();
+                document.getElementById('displayEmployeeId').textContent = profile.employee_id;
+                document.getElementById('displayClearance').textContent = `LEVEL ${profile.clearance_level}`;
+                document.getElementById('displayDepartment').textContent = profile.department;
+                document.getElementById('displayRoot').textContent = profile.is_root ? 'YES' : 'NO';
+                
+                showSection('dashboardSection');
+            } catch (error) {
+                showMessage('loginMessage', 'Failed to load profile', true);
+            }
+        }
+        
+        async function showSearch() {
+            document.getElementById('dashboardContent').innerHTML = `
+                <h3>&gt; EMPLOYEE DIRECTORY</h3>
+                <div class="form-group">
+                    <label>&gt; Search by name or department:</label>
+                    <input type="text" id="searchQuery" placeholder="Enter search term">
+                </div>
+                <button onclick="performSearch()">SEARCH</button>
+                <div id="searchResults" style="margin-top: 20px;"></div>
+            `;
+        }
+        
+        async function performSearch() {
+            const query = document.getElementById('searchQuery').value;
+            
+            if (!query) return;
+            
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('searchResults');
+                
+                if (data.results && data.results.length > 0) {
+                    resultsDiv.innerHTML = '<p><strong>RESULTS:</strong></p>';
+                    data.results.forEach(emp => {
+                        resultsDiv.innerHTML += `
+                            <div class="employee-card">
+                                <p><strong>ID:</strong> ${emp.employee_id}</p>
+                                <p><strong>Username:</strong> ${emp.username}</p>
+                                <p><strong>Email:</strong> ${emp.email}</p>
+                                <p><strong>Department:</strong> ${emp.department}</p>
+                                <p><strong>Clearance:</strong> Level ${emp.clearance_level}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    resultsDiv.innerHTML = '<p>No results found.</p>';
+                }
+            } catch (error) {
+                document.getElementById('searchResults').innerHTML = '<p class="error">Search failed</p>';
+            }
+        }
+        
+        async function showDocuments() {
+            try {
+                const response = await fetch('/api/documents');
+                const data = await response.json();
+                
+                let html = '<h3>&gt; DOCUMENT LIBRARY</h3>';
+                html += '<p style="margin-bottom: 15px;">Files available at your clearance level:</p>';
+                
+                if (data.documents && data.documents.length > 0) {
+                    data.documents.forEach(doc => {
+                        html += `
+                            <div class="doc-item" onclick="downloadFile('${doc.filename}')">
+                                <span>${doc.filename} <span class="badge">LEVEL ${doc.clearance_required}</span></span>
+                                <span>⬇</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += '<p>No documents available at your clearance level.</p>';
+                }
+                
+                document.getElementById('dashboardContent').innerHTML = html;
+            } catch (error) {
+                document.getElementById('dashboardContent').innerHTML = '<p class="error">Failed to load documents</p>';
+            }
+        }
+        
+        async function downloadFile(filename) {
+            try {
+                window.location.href = `/api/download?file=${encodeURIComponent(filename)}`;
+            } catch (error) {
+                alert('Download failed');
+            }
+        }
+        
+        async function showElevate() {
+            document.getElementById('dashboardContent').innerHTML = `
+                <h3>&gt; PRIVILEGE ELEVATION REQUEST</h3>
+                <div class="info-box">
+                    <p>Request elevation to higher clearance level.</p>
+                    <p>Requires approval from employees with target clearance or higher.</p>
+                </div>
+                <div class="form-group">
+                    <label>&gt; Target Level:</label>
+                    <input type="number" id="targetLevel" min="1" max="5" placeholder="2">
+                </div>
+                <div class="form-group">
+                    <label>&gt; Approver Employee IDs (comma-separated):</label>
+                    <input type="text" id="approvers" placeholder="EMP001, EMP002">
+                </div>
+                <button onclick="requestElevation()">SUBMIT REQUEST</button>
+                <div id="elevationResult" style="margin-top: 15px;"></div>
+            `;
+        }
+        
+        async function requestElevation() {
+            const level = parseInt(document.getElementById('targetLevel').value);
+            const approvers = document.getElementById('approvers').value.split(',').map(a => a.trim());
+            
+            try {
+                const response = await fetch('/api/elevate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({level, approvals: approvers})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('elevationResult').innerHTML = `
+                        <div class="message">Elevation successful! New clearance: Level ${data.new_clearance_level}</div>
+                    `;
+                    loadDashboard();
+                } else {
+                    document.getElementById('elevationResult').innerHTML = `
+                        <div class="message error">${data.error}</div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('elevationResult').innerHTML = `
+                    <div class="message error">Request failed</div>
+                `;
+            }
+        }
+        
+        async function logout() {
+            try {
+                await fetch('/api/logout', {method: 'POST'});
+                currentUser = null;
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                showSection('loginSection');
+            } catch (error) {
+                console.error('Logout error');
+            }
+        }
+        
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+        
+        document.getElementById('twoFactorCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verify2FA();
+        });
+    </script>
+</body>
+</html>
