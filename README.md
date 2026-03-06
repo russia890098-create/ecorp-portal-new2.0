@@ -79,7 +79,9 @@ Visit: `http://localhost:5000`
    SECRET_KEY=<random session secret>
    FLAG_KEY=<random flag key>
    ROOT_PASSWORD=<random root password>
-   DECRYPT_KEY=<random decrypt key>
+   DECRYPT_KEY_PART1=<random decrypt part 1>
+   DECRYPT_KEY_PART2=<random decrypt part 2>
+   DECRYPT_KEY_PART3=<random decrypt part 3>
    FLAG_1=XPL8{group_1_flag}
    FLAG_2=XPL8{group_2_flag}
    FLAG_3=XPL8{group_3_flag}
@@ -185,7 +187,8 @@ Check logs for suspicious activity:
 - Missing or invalid identity returns `DECOY_FLAG`.
 - Root decrypt also requires:
 - exact encrypted artifact from Stage 3 (`uploads/private/flag.enc`)
-- valid decryption key in request body (`key`)
+- valid combined decryption key in request body (`key`)
+- key is assembled from 3 fragments across different stages/surfaces
 
 ### Changing the Flag
 
@@ -194,7 +197,9 @@ Create a local `.env` from `.env.example` and set:
 SECRET_KEY=<new random session secret>
 FLAG_KEY=<new random flag key>
 ROOT_PASSWORD=<new random root password>
-DECRYPT_KEY=<new random decrypt key>
+DECRYPT_KEY_PART1=<new random decrypt part 1>
+DECRYPT_KEY_PART2=<new random decrypt part 2>
+DECRYPT_KEY_PART3=<new random decrypt part 3>
 FLAG_1=XPL8{your_group_1_flag}
 FLAG_2=XPL8{your_group_2_flag}
 FLAG_3=XPL8{your_group_3_flag}
