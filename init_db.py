@@ -138,7 +138,7 @@ def init_db():
         f.write('Quarter,Revenue,Forecast\nQ3,18400000000,19000000000')
 
     with open(os.path.join(PUBLIC_UPLOADS_DIR, 'board_meeting_notes.txt'), 'w') as f:
-        f.write('Board Notes:\n- Privilege elevation approvals remain manual.\n- Root decryption service restricted.')
+        f.write('Board Notes:\n- Privilege elevation approvals remain manual.\n- Root decryption service restricted.\n- Key material is distributed through internal out-of-band channels.')
     
     cursor.execute(
         "INSERT INTO system_config (key, value) VALUES ('maintenance_mode', '0')"
