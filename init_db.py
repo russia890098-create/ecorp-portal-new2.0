@@ -16,6 +16,9 @@ DB_PATH = os.getenv('DATABASE', 'ecorp.db')
 FLAG_KEY = require_env('FLAG_KEY')
 ROOT_PASSWORD = require_env('ROOT_PASSWORD')
 FLAG_ARTIFACT = os.getenv('FLAG_ARTIFACT', 'ecorp_root_artifact_v1')
+DECRYPT_KEY_PART1 = require_env('DECRYPT_KEY_PART1')
+DECRYPT_KEY_PART2 = require_env('DECRYPT_KEY_PART2')
+DECRYPT_KEY_PART3 = require_env('DECRYPT_KEY_PART3')
 UPLOADS_DIR = 'uploads'
 PUBLIC_UPLOADS_DIR = os.path.join(UPLOADS_DIR, 'public')
 PRIVATE_UPLOADS_DIR = os.path.join(UPLOADS_DIR, 'private')
@@ -127,6 +130,8 @@ def init_db():
     os.makedirs(PRIVATE_UPLOADS_DIR, exist_ok=True)
     with open(os.path.join(PRIVATE_UPLOADS_DIR, 'flag.enc'), 'w') as f:
         f.write(encrypted_flag)
+    with open(os.path.join(PRIVATE_UPLOADS_DIR, '.part2.key'), 'w') as f:
+        f.write(DECRYPT_KEY_PART2)
     
     with open(os.path.join(PUBLIC_UPLOADS_DIR, 'merger_proposal.pdf'), 'w') as f:
         f.write('E Corp Merger Proposal - Confidential\nThis document contains sensitive merger information.')
@@ -146,6 +151,11 @@ def init_db():
     
     cursor.execute(
         "INSERT INTO system_config (key, value) VALUES ('debug_enabled', '0')"
+    )
+
+    cursor.execute(
+        "INSERT INTO system_config (key, value) VALUES ('kms_shard_alpha', ?)",
+        (DECRYPT_KEY_PART1,)
     )
     
     conn.commit()
