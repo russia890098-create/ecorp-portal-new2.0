@@ -17,7 +17,10 @@ def require_env(name):
 
 DB_PATH = os.getenv('DATABASE', 'ecorp.db')
 FLAG_KEY = require_env('FLAG_KEY')
-DECRYPT_KEY = require_env('DECRYPT_KEY')
+DECRYPT_KEY_PART1 = require_env('DECRYPT_KEY_PART1')
+DECRYPT_KEY_PART2 = require_env('DECRYPT_KEY_PART2')
+DECRYPT_KEY_PART3 = require_env('DECRYPT_KEY_PART3')
+DECRYPT_KEY = f"{DECRYPT_KEY_PART1}{DECRYPT_KEY_PART2}{DECRYPT_KEY_PART3}"
 DECOY_FLAG = os.getenv('DECOY_FLAG', 'XPL8{fake_flag_i_require_something}')
 IDENTITY_FLAGS = {
     'elliot': require_env('FLAG_1'),
@@ -375,6 +378,11 @@ def decrypt_flag():
         return jsonify({'decrypted': mapped_flag})
     except:
         return jsonify({'error': 'Decryption failed'}), 400
+
+@app.route('/api/root/key-fragment', methods=['GET'])
+@root_required
+def root_key_fragment():
+    return jsonify({'fragment': DECRYPT_KEY_PART3})
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
